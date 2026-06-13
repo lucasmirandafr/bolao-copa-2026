@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getFlagUrl } from "@/lib/flags";
+import { getLiveMatchWithCache, getMatchPredictionsWithCache } from "@/lib/supabase/cache";
 import PageHeader from "@/components/PageHeader";
 import { LiveIcon } from "@/components/icons";
 import type { Match, Prediction } from "@/lib/types";
@@ -23,42 +24,16 @@ export default async function AoVivoPage() {
   const now = nowDate.toISOString();
   const liveSince = new Date(nowDate.getTime() - LIVE_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
 
-  const { data: liveMatches } = await supabase
-    .from("matches")
-    .select("*")
-    .lte("match_date", now)
-    .gte("match_date", liveSince)
-    .neq("status", "finished")
-    .order("match_date", { ascending: false })
-    .limit(1)
-    .returns<Match[]>();
-
-  let match = liveMatches?.[0] ?? null;
-
-  if (!match) {
-    const { data: nextMatches } = await supabase
-      .from("matches")
-      .select("*")
-      .gt("match_date", now)
-      .order("match_date", { ascending: true })
-      .limit(1)
-      .returns<Match[]>();
-
-    match = nextMatches?.[0] ?? null;
-  }
+  const match = await getLiveMatchWithCache(now, liveSince);
 
   const notStarted = match ? new Date(match.match_date).getTime() > nowDate.getTime() : false;
 
   let predictions: (Prediction & { username: string })[] = [];
 
   if (match) {
-    const { data: matchPredictions } = await supabase
-      .from("predictions")
-      .select("*")
-      .eq("match_id", match.id)
-      .returns<Prediction[]>();
+    const matchPredictions = await getMatchPredictionsWithCache(match.id);
 
-    const userIds = (matchPredictions ?? []).map((p) => p.user_id);
+    const userIds = matchPredictions.map((p) => p.user_id);
     const { data: profiles } =
       userIds.length > 0
         ? await supabase.from("profiles").select("id, display_name").in("id", userIds)

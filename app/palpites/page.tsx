@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getMatchesWithCache } from "@/lib/supabase/cache";
 import MyPredictionsList from "@/components/MyPredictionsList";
 import PageHeader from "@/components/PageHeader";
 import { NotesIcon } from "@/components/icons";
@@ -14,9 +15,9 @@ export default async function PalpitesPage() {
     redirect("/login");
   }
 
-  const [{ data: predictions }, { data: matches }] = await Promise.all([
+  const [{ data: predictions }, matches] = await Promise.all([
     supabase.from("predictions").select("*").eq("user_id", user.id).returns<Prediction[]>(),
-    supabase.from("matches").select("*").order("match_date", { ascending: true }).returns<Match[]>(),
+    getMatchesWithCache(),
   ]);
 
   const matchById = new Map((matches ?? []).map((m) => [m.id, m]));

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { invalidateCache, invalidateCachePrefix } from "@/lib/cache";
 
 export type PredictionState = { error?: string; success?: boolean } | null;
 
@@ -55,6 +56,8 @@ export async function savePrediction(
     return { error: "O jogo já começou ou houve um erro ao salvar o palpite." };
   }
 
+  invalidateCache("matches:all");
+  invalidateCachePrefix("predictions:match:");
   revalidatePath("/");
   revalidatePath("/perfil");
   return { success: true };
@@ -86,6 +89,9 @@ export async function confirmPrediction(
     return { error: "O jogo já começou ou houve um erro ao confirmar o palpite." };
   }
 
+  invalidateCache("matches:all");
+  invalidateCache("ranking:all");
+  invalidateCachePrefix("predictions:match:");
   revalidatePath("/");
   revalidatePath("/perfil");
   return { success: true };

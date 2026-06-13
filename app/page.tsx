@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getMatchesWithCache } from "@/lib/supabase/cache";
 import MatchesList from "@/components/MatchesList";
 import PageHeader from "@/components/PageHeader";
 import { BallIcon } from "@/components/icons";
@@ -10,10 +11,7 @@ export default async function HomePage() {
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
 
-  const { data: matches } = await supabase
-    .from("matches")
-    .select("*")
-    .order("match_date", { ascending: true });
+  const matches = await getMatchesWithCache();
 
   const { data: predictions } = user
     ? await supabase.from("predictions").select("*").eq("user_id", user.id)

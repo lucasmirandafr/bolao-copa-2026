@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getRankingWithCache } from "@/lib/supabase/cache";
 import RankingTable from "@/components/RankingTable";
 import PageHeader from "@/components/PageHeader";
 import { TrophyIcon } from "@/components/icons";
@@ -8,10 +9,7 @@ export default async function RankingPage() {
   const supabase = await createClient();
 
   const { data: userData } = await supabase.auth.getUser();
-  const { data: ranking } = await supabase
-    .from("ranking")
-    .select("*")
-    .returns<RankingRow[]>();
+  const ranking = await getRankingWithCache();
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-6">

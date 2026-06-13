@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { invalidateCache, invalidateCachePrefix } from "@/lib/cache";
 
 export type AdminState = { error?: string; success?: boolean } | null;
 
@@ -37,6 +38,9 @@ export async function updateMatchResult(
     return { error: "Não foi possível salvar o resultado. Você é administrador?" };
   }
 
+  invalidateCache("matches:all");
+  invalidateCache("ranking:all");
+  invalidateCachePrefix("predictions:match:");
   revalidatePath("/admin");
   revalidatePath("/");
   revalidatePath("/ranking");
@@ -67,6 +71,9 @@ export async function setMatchLatePredictions(
     return { error: "Não foi possível salvar. Você é administrador?" };
   }
 
+  invalidateCache("matches:all");
+  invalidateCache("ranking:all");
+  invalidateCachePrefix("predictions:match:");
   revalidatePath("/");
   revalidatePath("/ao-vivo");
   return { success: true };
