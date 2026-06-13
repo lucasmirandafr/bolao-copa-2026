@@ -39,7 +39,7 @@ export default async function PerfilPage() {
       />
 
       <div className="mb-6 rounded-xl border border-zinc-200 bg-white p-4">
-        <p className="text-sm text-zinc-500">Jogador</p>
+        <p className="text-sm text-zinc-500">Usuário</p>
         <h1 className="text-xl font-bold text-zinc-900">{profile?.display_name}</h1>
         <p className="mt-1 text-sm text-zinc-500">@{profile?.username}</p>
         {createdAt && (

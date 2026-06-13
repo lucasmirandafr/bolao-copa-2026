@@ -19,25 +19,41 @@ export default function AuthForm({ mode, action }: Props) {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       {isCadastro && (
-        <div className="flex flex-col gap-1">
-          <label htmlFor="display_name" className="text-sm font-medium text-zinc-700">
-            Nome de exibição
-          </label>
-          <input
-            id="display_name"
-            name="display_name"
-            type="text"
-            required
-            minLength={2}
-            placeholder="Como vão te chamar no ranking"
-            className="rounded-lg border border-zinc-300 px-4 py-3 text-base focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100"
-          />
+        <div className="flex gap-3">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <label htmlFor="first_name" className="text-sm font-medium text-zinc-700">
+              Nome
+            </label>
+            <input
+              id="first_name"
+              name="first_name"
+              type="text"
+              required
+              minLength={2}
+              placeholder="Seu nome"
+              className="rounded-lg border border-zinc-300 px-4 py-3 text-base uppercase focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100"
+            />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <label htmlFor="last_name" className="text-sm font-medium text-zinc-700">
+              Sobrenome
+            </label>
+            <input
+              id="last_name"
+              name="last_name"
+              type="text"
+              required
+              minLength={2}
+              placeholder="Seu sobrenome"
+              className="rounded-lg border border-zinc-300 px-4 py-3 text-base uppercase focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100"
+            />
+          </div>
         </div>
       )}
 
       <div className="flex flex-col gap-1">
         <label htmlFor="username" className="text-sm font-medium text-zinc-700">
-          Nickname
+          Nome de usuário
         </label>
         <input
           id="username"
@@ -48,7 +64,7 @@ export default function AuthForm({ mode, action }: Props) {
           maxLength={20}
           pattern="[a-zA-Z0-9_]+"
           autoComplete="username"
-          placeholder="seu_nickname"
+          placeholder="Seu nome de usuário"
           className="rounded-lg border border-zinc-300 px-4 py-3 text-base focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100"
         />
         {isCadastro && (

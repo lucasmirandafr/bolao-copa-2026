@@ -38,16 +38,18 @@ export async function signup(
   formData: FormData
 ): Promise<AuthState> {
   const username = String(formData.get("username") ?? "").trim();
-  const displayName = String(formData.get("display_name") ?? "").trim();
+  const firstName = String(formData.get("first_name") ?? "").trim().toUpperCase();
+  const lastName = String(formData.get("last_name") ?? "").trim().toUpperCase();
+  const displayName = `${firstName} ${lastName}`.trim();
   const password = String(formData.get("password") ?? "");
 
   if (!USERNAME_REGEX.test(username)) {
     return {
-      error: "O nickname deve ter de 3 a 20 caracteres (letras, números ou _).",
+      error: "O nome de usuário deve ter de 3 a 20 caracteres (letras, números ou _).",
     };
   }
-  if (displayName.length < 2) {
-    return { error: "O nome de exibição precisa ter pelo menos 2 caracteres." };
+  if (firstName.length < 2 || lastName.length < 2) {
+    return { error: "Informe seu nome e sobrenome." };
   }
   if (password.length < 6) {
     return { error: "A senha precisa ter pelo menos 6 caracteres." };
