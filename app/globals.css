@@ -1,11 +1,28 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+
+  /* Identidade visual baseada na logo da Copa do Mundo 2026 */
+  --color-green-50: #e7f3ed;
+  --color-green-100: #cce6db;
+  --color-green-600: #0d7247;
+  --color-green-700: #075c39;
+
+  --color-brand-navy: #132e49;
+  --color-brand-red: #e30613;
 }
 
 html,
 body {
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

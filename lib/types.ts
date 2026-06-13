@@ -7,6 +7,7 @@ export type Match = {
   home_score: number | null;
   away_score: number | null;
   status: "scheduled" | "finished";
+  allow_late_predictions: boolean;
 };
 
 export type Prediction = {
@@ -19,11 +20,17 @@ export type Prediction = {
   confirmed: boolean;
 };
 
+export type AppSetting = {
+  key: string;
+  value: string;
+};
+
 export type RankingRow = {
   user_id: string;
   username: string;
   display_name: string;
   total_points: number;
   total_exact: number;
+  total_result: number;
   total_palpites: number;
 };

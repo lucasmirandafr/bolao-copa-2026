@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getFlagUrl } from "@/lib/flags";
+import PageHeader from "@/components/PageHeader";
+import { LiveIcon } from "@/components/icons";
 import type { Match, Prediction } from "@/lib/types";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -81,12 +83,15 @@ export default async function AoVivoPage() {
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-6">
-      <h1 className="mb-1 text-xl font-bold text-zinc-900">Ao vivo</h1>
-      <p className="mb-4 text-sm text-zinc-500">
-        {notStarted
-          ? "Nenhum jogo em andamento agora. Mostrando o próximo jogo."
-          : "Palpites de todo mundo para o jogo que está acontecendo agora."}
-      </p>
+      <PageHeader
+        icon={<LiveIcon className="h-7 w-7" />}
+        title="Ao vivo"
+        subtitle={
+          notStarted
+            ? "Próximo jogo agendado."
+            : "Palpites de todo mundo para o jogo atual."
+        }
+      />
 
       {!match && (
         <p className="rounded-xl bg-zinc-50 p-4 text-sm text-zinc-500">

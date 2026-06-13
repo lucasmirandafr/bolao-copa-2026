@@ -2,9 +2,6 @@
 -- dos jogos pela própria interface (tela /admin), em vez de precisar
 -- usar o Table Editor do Supabase.
 
-alter table public.profiles
-  add column is_admin boolean not null default false;
-
 create policy "Admin pode atualizar jogos"
   on public.matches for update
   to authenticated

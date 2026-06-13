@@ -29,6 +29,17 @@ export async function savePrediction(
     return { error: "Você precisa estar logado." };
   }
 
+  const { data: existing } = await supabase
+    .from("predictions")
+    .select("confirmed")
+    .eq("user_id", userData.user.id)
+    .eq("match_id", matchId)
+    .maybeSingle();
+
+  if (existing?.confirmed) {
+    return { error: "Palpite já confirmado, não pode ser editado." };
+  }
+
   const { error } = await supabase.from("predictions").upsert(
     {
       user_id: userData.user.id,

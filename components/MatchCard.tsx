@@ -2,12 +2,14 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { confirmPrediction, savePrediction } from "@/lib/actions/predictions";
+import { updateMatchResult, setMatchLatePredictions } from "@/lib/actions/admin";
 import { getFlagUrl } from "@/lib/flags";
 import type { Match, Prediction } from "@/lib/types";
 
 type Props = {
   match: Match;
   prediction: Prediction | null;
+  isAdmin?: boolean;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -31,14 +33,22 @@ function formatCountdown(ms: number): string {
   return parts.join(" ");
 }
 
-export default function MatchCard({ match, prediction }: Props) {
+export default function MatchCard({ match, prediction, isAdmin }: Props) {
   const [state, formAction, pending] = useActionState(savePrediction, null);
   const [confirmState, confirmAction, confirming] = useActionState(confirmPrediction, null);
+  const [adminState, adminAction, adminPending] = useActionState(updateMatchResult, null);
+  const [lateState, lateAction, latePending] = useActionState(setMatchLatePredictions, null);
   const [home, setHome] = useState(prediction?.home_score?.toString() ?? "");
   const [away, setAway] = useState(prediction?.away_score?.toString() ?? "");
+  const [resultHome, setResultHome] = useState(match.home_score?.toString() ?? "");
+  const [resultAway, setResultAway] = useState(match.away_score?.toString() ?? "");
+  const [resultFinished, setResultFinished] = useState(match.status === "finished");
+  const [allowLate, setAllowLate] = useState(match.allow_late_predictions);
   const [now, setNow] = useState<number | null>(null);
   const saveFormId = `save-prediction-${match.id}`;
   const confirmFormId = `confirm-prediction-${match.id}`;
+  const adminFormId = `admin-result-${match.id}`;
+  const lateFormId = `admin-late-${match.id}`;
 
   useEffect(() => {
     const tick = () => setNow(Date.now());
@@ -53,11 +63,17 @@ export default function MatchCard({ match, prediction }: Props) {
   const matchTime = new Date(match.match_date).getTime();
   const opensAt = matchTime - 6 * 60 * 60 * 1000;
   const isFinished = match.status === "finished";
-  const notOpenYet = now !== null && !isFinished && now < opensAt;
-  const isOpen = now !== null && !isFinished && now >= opensAt && now < matchTime;
-  const locked = now === null || isFinished || now >= matchTime || notOpenYet;
+  // Palpites tardios liberados pelo admin só valem para quem ainda não
+  // registrou um palpite nesse jogo (a regra de edição não muda).
+  const lateAllowed = match.allow_late_predictions && !prediction;
+  const notOpenYet = now !== null && !isFinished && !lateAllowed && now < opensAt;
+  const isOpen =
+    now !== null && !isFinished && (lateAllowed || (now >= opensAt && now < matchTime));
+  const locked = now === null || isFinished || !isOpen;
 
   const isDraft = !!prediction && !prediction.confirmed;
+  const isConfirmed = !!prediction?.confirmed;
+  const inputsDisabled = locked || isConfirmed;
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
@@ -90,7 +106,7 @@ export default function MatchCard({ match, prediction }: Props) {
               min={0}
               max={99}
               required
-              disabled={locked}
+              disabled={inputsDisabled}
               value={home}
               onChange={(e) => setHome(e.target.value)}
               className="h-11 w-12 rounded-lg border border-zinc-300 text-center text-lg font-bold disabled:bg-zinc-100 disabled:text-zinc-400"
@@ -103,7 +119,7 @@ export default function MatchCard({ match, prediction }: Props) {
               min={0}
               max={99}
               required
-              disabled={locked}
+              disabled={inputsDisabled}
               value={away}
               onChange={(e) => setAway(e.target.value)}
               className="h-11 w-12 rounded-lg border border-zinc-300 text-center text-lg font-bold disabled:bg-zinc-100 disabled:text-zinc-400"
@@ -152,9 +168,13 @@ export default function MatchCard({ match, prediction }: Props) {
               <span className="rounded-full bg-green-100 px-2 py-0.5 font-semibold text-green-700">
                 Aberto
               </span>
-              <span className="text-zinc-400">
-                Encerra em {formatCountdown(matchTime - (now ?? matchTime))}
-              </span>
+              {lateAllowed && now !== null && now >= matchTime ? (
+                <span className="text-zinc-400">Palpites liberados pelo admin</span>
+              ) : (
+                <span className="text-zinc-400">
+                  Encerra em {formatCountdown(matchTime - (now ?? matchTime))}
+                </span>
+              )}
             </>
           )}
           {!isFinished && !notOpenYet && !isOpen && now !== null && (
@@ -204,24 +224,118 @@ export default function MatchCard({ match, prediction }: Props) {
                 {confirming ? "Confirmando..." : "Confirmar"}
               </button>
             )}
-            <button
-              form={saveFormId}
-              type="submit"
-              disabled={pending}
-              className="rounded-lg bg-green-600 px-3 py-1.5 font-semibold text-white active:bg-green-700 disabled:opacity-60"
-            >
-              {pending ? "Salvando..." : prediction ? "Atualizar" : "Salvar"}
-            </button>
+            {!isConfirmed && (
+              <button
+                form={saveFormId}
+                type="submit"
+                disabled={pending}
+                className="rounded-lg bg-green-600 px-3 py-1.5 font-semibold text-white active:bg-green-700 disabled:opacity-60"
+              >
+                {pending ? "Salvando..." : prediction ? "Atualizar" : "Salvar"}
+              </button>
+            )}
           </div>
         )}
       </div>
 
+      {isConfirmed && (
+        <p className="mt-2 text-xs text-blue-600">
+          Palpite confirmado. Não é mais possível editar o placar.
+        </p>
+      )}
+      {!locked && !isConfirmed && (
+        <p className="mt-2 text-xs text-amber-600">
+          Atenção: ao confirmar o palpite, ele não poderá mais ser editado.
+        </p>
+      )}
       {state?.error && <p className="mt-2 text-xs text-red-600">{state.error}</p>}
       {state?.success && <p className="mt-2 text-xs text-green-600">Palpite salvo!</p>}
       {confirmState?.error && <p className="mt-2 text-xs text-red-600">{confirmState.error}</p>}
       {confirmState?.success && (
         <p className="mt-2 text-xs text-green-600">Palpite confirmado!</p>
       )}
+
+      {isAdmin && (
+        <form
+          id={adminFormId}
+          action={adminAction}
+          className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-zinc-200 pt-3 text-xs"
+        >
+          <input type="hidden" name="match_id" value={match.id} />
+          <input type="hidden" name="status" value={resultFinished ? "finished" : "scheduled"} />
+          <span className="font-semibold text-zinc-500">Resultado real:</span>
+          <input
+            type="number"
+            name="home_score"
+            min={0}
+            max={99}
+            required
+            value={resultHome}
+            onChange={(e) => setResultHome(e.target.value)}
+            className="h-8 w-10 rounded-md border border-zinc-300 text-center text-sm font-bold"
+            aria-label={`Resultado ${match.home_team}`}
+          />
+          <span className="text-zinc-400">x</span>
+          <input
+            type="number"
+            name="away_score"
+            min={0}
+            max={99}
+            required
+            value={resultAway}
+            onChange={(e) => setResultAway(e.target.value)}
+            className="h-8 w-10 rounded-md border border-zinc-300 text-center text-sm font-bold"
+            aria-label={`Resultado ${match.away_team}`}
+          />
+          <label className="flex items-center gap-1 font-medium text-zinc-500">
+            <input
+              type="checkbox"
+              checked={resultFinished}
+              onChange={(e) => setResultFinished(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            Finalizado
+          </label>
+          <button
+            type="submit"
+            disabled={adminPending}
+            className="ml-auto rounded-md bg-zinc-800 px-2 py-1 font-semibold text-white disabled:opacity-60"
+          >
+            {adminPending ? "Salvando..." : "Salvar"}
+          </button>
+        </form>
+      )}
+      {adminState?.error && <p className="mt-2 text-xs text-red-600">{adminState.error}</p>}
+      {adminState?.success && <p className="mt-2 text-xs text-green-600">Resultado salvo!</p>}
+
+      {isAdmin && (
+        <form
+          id={lateFormId}
+          action={lateAction}
+          className="mt-2 flex items-center gap-2 text-xs"
+        >
+          <input type="hidden" name="match_id" value={match.id} />
+          <input type="hidden" name="allow_late_predictions" value={allowLate ? "on" : "off"} />
+          <label className="flex items-center gap-1 font-medium text-zinc-500">
+            <input
+              type="checkbox"
+              checked={allowLate}
+              onChange={(e) => setAllowLate(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            Liberar palpites (jogo em andamento)
+          </label>
+          <button
+            type="submit"
+            disabled={latePending}
+            className="ml-auto rounded-md bg-zinc-800 px-2 py-1 font-semibold text-white disabled:opacity-60"
+          >
+            {latePending ? "Salvando..." : "Salvar"}
+          </button>
+        </form>
+      )}
+      {lateState?.error && <p className="mt-2 text-xs text-red-600">{lateState.error}</p>}
+      {lateState?.success && <p className="mt-2 text-xs text-green-600">Configuração salva!</p>}
     </div>
   );
 }

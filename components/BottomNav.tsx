@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BallIcon, LiveIcon, NotesIcon, TrophyIcon, UserIcon } from "@/components/icons";
 
 const ITEMS = [
-  { href: "/", label: "Jogos", icon: "⚽" },
-  { href: "/ao-vivo", label: "Ao vivo", icon: "🔴" },
-  { href: "/ranking", label: "Ranking", icon: "🏆" },
-  { href: "/perfil", label: "Perfil", icon: "👤" },
+  { href: "/", label: "Jogos", Icon: BallIcon },
+  { href: "/ao-vivo", label: "Ao vivo", Icon: LiveIcon },
+  { href: "/palpites", label: "Palpites", Icon: NotesIcon },
+  { href: "/ranking", label: "Ranking", Icon: TrophyIcon },
+  { href: "/perfil", label: "Perfil", Icon: UserIcon },
 ];
 
 const HIDDEN_PATHS = ["/login", "/cadastro"];
@@ -24,6 +26,7 @@ export default function BottomNav() {
       <div className="mx-auto flex max-w-md">
         {ITEMS.map((item) => {
           const active = pathname === item.href;
+          const Icon = item.Icon;
           return (
             <Link
               key={item.href}
@@ -32,7 +35,7 @@ export default function BottomNav() {
                 active ? "text-green-600" : "text-zinc-400"
               }`}
             >
-              <span className="text-xl">{item.icon}</span>
+              <Icon className="h-5 w-5" strokeWidth={active ? 2 : 1.5} />
               {item.label}
             </Link>
           );

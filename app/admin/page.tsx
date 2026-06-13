@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import AdminMatchRow from "@/components/AdminMatchRow";
-import type { Match } from "@/lib/types";
+import AdminUsersList, { type AdminUserRow } from "@/components/AdminUsersList";
+import AdminTabs from "@/components/AdminTabs";
+import AdminDevPanel from "@/components/AdminDevPanel";
+import PageHeader from "@/components/PageHeader";
+import { GearIcon } from "@/components/icons";
+import type { AppSetting } from "@/lib/types";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -22,24 +26,29 @@ export default async function AdminPage() {
     redirect("/");
   }
 
-  const { data: matches } = await supabase
-    .from("matches")
-    .select("*")
-    .order("match_date", { ascending: true })
-    .returns<Match[]>();
+  const { data: users } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, is_admin, created_at")
+    .order("created_at", { ascending: true })
+    .returns<AdminUserRow[]>();
+
+  const { data: settings } = await supabase
+    .from("app_settings")
+    .select("key, value")
+    .returns<AppSetting[]>();
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-6">
-      <h1 className="mb-1 text-xl font-bold text-zinc-900">Administração</h1>
-      <p className="mb-4 text-sm text-zinc-500">
-        Atualize o placar e marque o jogo como finalizado para calcular os pontos.
-      </p>
+      <PageHeader
+        icon={<GearIcon className="h-7 w-7" />}
+        title="Administração"
+        subtitle="Gerencie usuários e as regras do bolão."
+      />
 
-      <div className="flex flex-col gap-3">
-        {(matches ?? []).map((match) => (
-          <AdminMatchRow key={match.id} match={match} />
-        ))}
-      </div>
+      <AdminTabs
+        usersTab={<AdminUsersList users={users ?? []} currentUserId={user.id} />}
+        devTab={<AdminDevPanel settings={settings ?? []} />}
+      />
     </div>
   );
 }
